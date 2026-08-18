@@ -1,0 +1,1454 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>派克新材 × 商飞供应商准入认证 · 智能BI看板</title>
+<style>
+:root {
+  --c-done: #C6EFCE; --c-done-t: #006100;
+  --c-private: #FFE699; --c-private-t: #9C6500;
+  --c-fail: #FFC7CE; --c-fail-t: #9C0006;
+  --c-notstarted: #D9D9D9; --c-notstarted-t: #3F3F3F;
+  --c-unreached: #F5F5F5; --c-unreached-t: #999999;
+  --c-gsl: #DEEBF7; --c-psl: #E2EFDA; --c-acl-e: #FFF2CC; --c-acl-o: #FBE5D6; --c-qsl: #EDEDED;
+  --c-primary: #C00000; --c-dark: #1F4E79; --c-border: #ccc;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: "Microsoft YaHei", "SimHei", sans-serif; background: #f0f2f5; color: #333; font-size: 14px; }
+
+/* ===== Header ===== */
+.header { background: linear-gradient(135deg, #C00000, #8B0000); color: #fff; padding: 16px 32px; box-shadow: 0 2px 8px rgba(0,0,0,.15); }
+.header h1 { font-size: 20px; margin-bottom: 4px; }
+.header .meta { font-size: 12px; opacity: .85; display: flex; gap: 24px; align-items: center; }
+.header .btn-group { float: right; margin-top: -36px; }
+.btn { display: inline-block; padding: 6px 16px; border: 1px solid rgba(255,255,255,.5); border-radius: 4px; color: #fff; cursor: pointer; font-size: 13px; background: rgba(255,255,255,.1); transition: all .2s; }
+.btn:hover { background: rgba(255,255,255,.25); }
+.btn-primary { background: #fff; color: #C00000; border-color: #fff; font-weight: 600; }
+.btn-primary:hover { background: #f0f0f0; }
+
+/* ===== Layout ===== */
+.container { max-width: 1600px; margin: 0 auto; padding: 20px; }
+.row { display: flex; gap: 20px; margin-bottom: 20px; }
+.col { flex: 1; }
+
+/* ===== Cards ===== */
+.card { background: #fff; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,.08); overflow: hidden; }
+.card-header { padding: 12px 20px; font-weight: 600; font-size: 15px; border-bottom: 1px solid var(--c-border); display: flex; justify-content: space-between; align-items: center; }
+.card-header .badge { font-size: 12px; font-weight: 400; color: #888; }
+.card-body { padding: 16px 20px; }
+
+/* ===== Stats ===== */
+.stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+.stat-item { text-align: center; padding: 16px 8px; border-radius: 6px; }
+.stat-item .num { font-size: 28px; font-weight: 700; }
+.stat-item .lbl { font-size: 12px; margin-top: 4px; }
+
+/* ===== Upload ===== */
+.upload-zone { border: 2px dashed var(--c-border); border-radius: 8px; padding: 32px 20px; text-align: center; cursor: pointer; transition: all .3s; }
+.upload-zone:hover, .upload-zone.dragover { border-color: var(--c-primary); background: #fff5f5; }
+.upload-zone .icon { font-size: 36px; margin-bottom: 8px; }
+.upload-zone .hint { font-size: 13px; color: #666; }
+.upload-zone .formats { font-size: 11px; color: #999; margin-top: 6px; }
+
+/* ===== Table ===== */
+.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tbl th { background: var(--c-primary); color: #fff; padding: 8px 10px; text-align: center; font-weight: 600; white-space: nowrap; }
+.tbl td { padding: 7px 10px; border: 1px solid #e0e0e0; vertical-align: middle; }
+.tbl tr:hover td { background: #f8f8f8; }
+.tbl .phase-cell { font-weight: 600; font-size: 12px; text-align: center; white-space: pre-line; }
+.tbl .seq-cell { text-align: center; font-weight: 600; }
+.tbl .status-cell { text-align: center; font-weight: 600; cursor: pointer; }
+.tbl .status-cell:hover { opacity: .8; }
+.tbl .detail-cell { font-size: 12px; max-width: 400px; }
+.tbl .source-cell { font-size: 11px; color: #666; }
+.tbl .milestone-row td { font-weight: 700; background: #fafafa; }
+
+/* ===== Chart (SVG) ===== */
+.chart-container { overflow-x: auto; padding: 8px 0; }
+.chart-container svg { display: block; margin: 0 auto; }
+
+/* ===== Summary ===== */
+.summary-tbl { width: 100%; border-collapse: collapse; }
+.summary-tbl th { background: var(--c-primary); color: #fff; padding: 8px; font-size: 13px; }
+.summary-tbl td { padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 12px; vertical-align: top; }
+.summary-tbl .sum-label { background: #FCE4D6; font-weight: 600; white-space: nowrap; }
+.summary-tbl .sum-value { color: var(--c-primary); font-weight: 600; white-space: nowrap; }
+
+/* ===== Modal ===== */
+.modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,.4); z-index: 1000; justify-content: center; align-items: flex-start; padding-top: 40px; }
+.modal-overlay.show { display: flex; }
+.modal { background: #fff; border-radius: 8px; width: 90%; max-width: 900px; max-height: 85vh; overflow: hidden; display: flex; flex-direction: column; }
+.modal-header { padding: 14px 20px; background: var(--c-primary); color: #fff; display: flex; justify-content: space-between; align-items: center; }
+.modal-header h3 { font-size: 16px; }
+.modal-close { cursor: pointer; font-size: 22px; opacity: .8; }
+.modal-close:hover { opacity: 1; }
+.modal-body { padding: 20px; overflow-y: auto; flex: 1; }
+
+/* ===== Analysis Results ===== */
+.analysis-file { margin-bottom: 20px; border: 1px solid var(--c-border); border-radius: 6px; overflow: hidden; }
+.analysis-file-header { padding: 10px 16px; background: #f5f5f5; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+.analysis-file-body { padding: 12px 16px; }
+.analysis-meta { display: flex; gap: 20px; margin-bottom: 12px; font-size: 12px; }
+.analysis-meta span { background: #f0f0f0; padding: 2px 10px; border-radius: 12px; }
+.matched-node { padding: 10px 14px; margin-bottom: 8px; border-radius: 4px; border-left: 4px solid; }
+.matched-node-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.matched-node-name { font-weight: 600; }
+.matched-node-hits { font-size: 11px; color: #666; }
+.matched-keywords { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
+.kw-tag { font-size: 11px; padding: 1px 8px; border-radius: 10px; background: #e8e8e8; }
+.context-block { font-size: 12px; color: #555; background: #f9f9f9; padding: 6px 10px; border-radius: 4px; margin-top: 4px; line-height: 1.6; }
+.suggestion-box { margin-top: 8px; padding: 8px 12px; border-radius: 4px; font-size: 12px; display: flex; align-items: center; gap: 10px; }
+.suggestion-box.apply { background: #e6f7e6; border: 1px solid #52c41a; }
+.btn-apply { padding: 4px 12px; border-radius: 4px; border: 1px solid #52c41a; background: #52c41a; color: #fff; cursor: pointer; font-size: 12px; }
+.btn-apply:hover { background: #389e0d; }
+
+/* ===== Edit Modal ===== */
+.edit-form label { display: block; margin-bottom: 4px; font-weight: 600; font-size: 13px; }
+.edit-form select, .edit-form textarea, .edit-form input { width: 100%; padding: 6px 10px; border: 1px solid var(--c-border); border-radius: 4px; font-size: 13px; margin-bottom: 12px; font-family: inherit; }
+.edit-form textarea { min-height: 80px; resize: vertical; }
+
+/* ===== Doc Library ===== */
+.doc-tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
+.doc-tbl th { background: #f5f5f5; padding: 6px 10px; text-align: left; border-bottom: 2px solid var(--c-border); }
+.doc-tbl td { padding: 6px 10px; border-bottom: 1px solid #eee; }
+
+/* ===== Toast ===== */
+.toast { position: fixed; bottom: 24px; right: 24px; background: #333; color: #fff; padding: 10px 20px; border-radius: 6px; font-size: 13px; z-index: 2000; opacity: 0; transition: opacity .3s; }
+.toast.show { opacity: 1; }
+.toast.success { background: #52c41a; }
+.toast.error { background: #f5222d; }
+
+/* ===== Tabs ===== */
+.tabs { display: flex; gap: 0; border-bottom: 2px solid var(--c-border); margin-bottom: 16px; flex-wrap: wrap; }
+.tab { padding: 8px 20px; cursor: pointer; font-size: 14px; font-weight: 600; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all .2s; }
+.tab.active { border-bottom-color: var(--c-primary); color: var(--c-primary); }
+.tab:hover { color: var(--c-primary); }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* ===== Contacts Tab ===== */
+.contact-stats { display: flex; gap: 16px; margin-bottom: 16px; }
+.contact-stat { flex: 1; text-align: center; padding: 12px; border-radius: 6px; }
+.contact-stat .num { font-size: 24px; font-weight: 700; }
+.contact-stat .lbl { font-size: 12px; margin-top: 4px; }
+.contact-img-box { margin-bottom: 16px; text-align: center; }
+.contact-img-box img { max-width: 100%; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.1); }
+.contact-tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
+.contact-tbl th { background: var(--c-dark); color: #fff; padding: 8px; text-align: center; white-space: nowrap; }
+.contact-tbl td { padding: 6px 8px; border: 1px solid #e0e0e0; vertical-align: middle; }
+.contact-tbl tr:hover td { background: #f8f8f8; }
+.contact-tbl .status-cell { text-align: center; font-weight: 600; }
+.contact-conclusion { background: #fff8e1; border: 1px solid #ffe082; border-radius: 6px; padding: 14px 18px; margin-top: 16px; }
+.contact-conclusion h4 { color: var(--c-dark); margin-bottom: 10px; }
+.contact-conclusion ol { padding-left: 20px; }
+.contact-conclusion li { margin-bottom: 6px; font-size: 13px; line-height: 1.6; }
+
+/* ===== Competitors Tab ===== */
+.comp-sub-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--c-border); margin-bottom: 16px; }
+.comp-sub-tab { padding: 6px 16px; cursor: pointer; font-size: 13px; font-weight: 600; border-bottom: 2px solid transparent; transition: all .2s; }
+.comp-sub-tab.active { border-bottom-color: var(--c-primary); color: var(--c-primary); }
+.comp-sub-content { display: none; }
+.comp-sub-content.active { display: block; }
+.comp-tbl { width: 100%; border-collapse: collapse; font-size: 11px; }
+.comp-tbl th { background: var(--c-dark); color: #fff; padding: 6px 8px; text-align: center; white-space: nowrap; }
+.comp-tbl td { padding: 5px 8px; border: 1px solid #e0e0e0; vertical-align: top; line-height: 1.5; }
+.comp-tbl tr:hover td { background: #f8f8f8; }
+.comp-route-card { border: 1px solid var(--c-border); border-radius: 6px; padding: 14px 18px; margin-bottom: 12px; }
+.comp-route-card h4 { color: var(--c-primary); margin-bottom: 8px; font-size: 14px; }
+.comp-route-card .route-meta { font-size: 12px; color: #666; margin-bottom: 8px; }
+.comp-route-card .route-features { font-size: 12px; line-height: 1.7; white-space: pre-line; }
+.comp-exp-card { border-left: 4px solid var(--c-primary); padding: 10px 16px; margin-bottom: 10px; background: #fafafa; border-radius: 0 6px 6px 0; }
+.comp-exp-card h4 { font-size: 13px; color: var(--c-dark); margin-bottom: 6px; }
+.comp-exp-card p { font-size: 12px; line-height: 1.6; color: #444; }
+.comp-exp-card .ref { font-size: 11px; color: #888; margin-top: 6px; }
+.comp-conclusion-box { background: #fff8e1; border: 1px solid #ffe082; border-radius: 6px; padding: 14px 18px; margin-top: 16px; font-size: 13px; line-height: 1.7; }
+.export-btn { display: inline-block; padding: 6px 16px; border: 1px solid var(--c-primary); border-radius: 4px; color: var(--c-primary); cursor: pointer; font-size: 12px; font-weight: 600; margin-bottom: 12px; transition: all .2s; }
+.export-btn:hover { background: var(--c-primary); color: #fff; }
+
+/* ===== Dynamics ===== */
+.dyn-section { background: #fff; border-radius: 8px; padding: 20px 24px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+.dyn-section h3 { font-size: 15px; font-weight: 700; color: #333; margin: 0 0 14px 0; padding-bottom: 8px; border-bottom: 2px solid #e0e0e0; }
+.dyn-chart-wrap { position: relative; height: 420px; width: 100%; }
+.dyn-chart-legend { display: flex; gap: 20px; margin-bottom: 10px; font-size: 12px; color: #666; }
+.dyn-chart-legend span { display: inline-flex; align-items: center; gap: 4px; }
+.dyn-chart-legend .dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; }
+.dyn-news-list { list-style: none; padding: 0; margin: 0; }
+.dyn-news-item { padding: 12px 0; border-bottom: 1px solid #eee; }
+.dyn-news-item:last-child { border-bottom: none; }
+.dyn-news-tag { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: 600; margin-right: 8px; }
+.dyn-tag-policy { background: #e3f2fd; color: #1565c0; }
+.dyn-tag-supply { background: #fff3e0; color: #e65100; }
+.dyn-tag-tech { background: #f3e5f5; color: #7b1fa2; }
+.dyn-tag-market { background: #e8f5e9; color: #2e7d32; }
+.dyn-news-date { font-size: 12px; color: #999; margin-right: 8px; }
+.dyn-news-title { font-size: 13px; font-weight: 600; color: #333; margin: 4px 0; }
+.dyn-news-desc { font-size: 12px; color: #666; line-height: 1.6; }
+.dyn-news-src { font-size: 11px; color: #999; margin-top: 4px; }
+.dyn-news-src a { color: #1976d2; text-decoration: none; }
+.dyn-summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.dyn-summary-card { background: #f5f7fa; border-radius: 6px; padding: 14px 16px; text-align: center; }
+.dyn-summary-card .num { font-size: 28px; font-weight: 800; color: var(--c-primary); }
+.dyn-summary-card .lbl { font-size: 12px; color: #888; margin-top: 4px; }
+
+
+/* ===== Project Plan Tab ===== */
+.plan-header { background: linear-gradient(135deg, #1F4E79, #2c6bad); color: #fff; border-radius: 10px; padding: 24px 28px; margin-bottom: 20px; }
+.plan-header h2 { font-size: 20px; margin-bottom: 8px; }
+.plan-header .plan-meta { display: flex; gap: 24px; flex-wrap: wrap; font-size: 13px; opacity: .9; }
+.plan-header .plan-meta span { background: rgba(255,255,255,.15); padding: 4px 12px; border-radius: 16px; }
+.plan-rigid { background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 14px 18px; margin-bottom: 20px; }
+.plan-rigid h4 { color: #856404; margin-bottom: 8px; font-size: 14px; }
+.plan-rigid li { font-size: 13px; color: #856404; margin-bottom: 4px; }
+.plan-gantt { background: #fff; border-radius: 10px; padding: 20px 24px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+.plan-gantt h3 { font-size: 16px; margin-bottom: 16px; color: #333; }
+.gantt-chart { position: relative; }
+.gantt-header { display: flex; border-bottom: 2px solid #e0e0e0; padding-bottom: 6px; margin-bottom: 8px; }
+.gantt-header .gantt-label { width: 200px; font-weight: 600; font-size: 12px; color: #666; }
+.gantt-header .gantt-months { flex: 1; display: flex; }
+.gantt-header .gantt-month { flex: 1; text-align: center; font-size: 11px; color: #999; }
+.gantt-row { display: flex; align-items: center; margin-bottom: 6px; min-height: 32px; }
+.gantt-row .gantt-label { width: 200px; font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gantt-row .gantt-bar-area { flex: 1; position: relative; height: 28px; }
+.gantt-bar { position: absolute; height: 24px; top: 2px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #fff; font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.15); cursor: pointer; transition: all .2s; }
+.gantt-bar:hover { transform: scaleY(1.15); box-shadow: 0 2px 8px rgba(0,0,0,.25); }
+.plan-phase-detail { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; margin-bottom: 20px; }
+.phase-card { background: #fff; border-radius: 8px; padding: 18px 20px; box-shadow: 0 1px 4px rgba(0,0,0,.06); border-top: 4px solid; }
+.phase-card h4 { font-size: 14px; margin-bottom: 4px; }
+.phase-card .phase-period { font-size: 12px; color: #888; margin-bottom: 10px; }
+.phase-card .phase-lead { font-size: 11px; color: #666; margin-bottom: 8px; }
+.phase-card ul { padding-left: 18px; margin: 0; }
+.phase-card li { font-size: 12px; line-height: 1.7; color: #444; }
+.phase-card .phase-deliverables { margin-top: 10px; padding-top: 8px; border-top: 1px dashed #e0e0e0; font-size: 11px; color: #666; }
+.phase-card .phase-deliverables strong { color: #333; }
+.plan-budget-section { background: #fff; border-radius: 10px; padding: 20px 24px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+.plan-budget-section h3 { font-size: 16px; margin-bottom: 16px; color: #333; }
+.budget-bar-item { display: flex; align-items: center; margin-bottom: 12px; }
+.budget-bar-item .blabel { width: 100px; font-size: 13px; font-weight: 600; text-align: right; padding-right: 12px; }
+.budget-bar-item .bar-wrap { flex: 1; height: 28px; background: #f0f0f0; border-radius: 6px; overflow: hidden; position: relative; }
+.budget-bar-item .bar-fill { height: 100%; border-radius: 6px; display: flex; align-items: center; padding-left: 10px; font-size: 12px; color: #fff; font-weight: 600; transition: width 1s ease; }
+.budget-bar-item .bamount { width: 100px; font-size: 13px; color: #666; padding-left: 12px; }
+.plan-revenue-section { background: #fff; border-radius: 10px; padding: 20px 24px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+.plan-revenue-section h3 { font-size: 16px; margin-bottom: 16px; color: #333; }
+.revenue-chart { display: flex; align-items: flex-end; gap: 24px; justify-content: center; height: 240px; padding: 0 20px 40px; position: relative; border-bottom: 2px solid #e0e0e0; }
+.revenue-group { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; max-width: 160px; }
+.revenue-bars { display: flex; gap: 6px; align-items: flex-end; height: 180px; }
+.revenue-bar { width: 36px; border-radius: 4px 4px 0 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 4px; font-size: 10px; color: #fff; font-weight: 600; transition: height 1s ease; position: relative; }
+.revenue-bar .bar-val { font-size: 11px; font-weight: 700; }
+.revenue-label { font-size: 11px; color: #666; text-align: center; margin-top: 8px; white-space: pre-line; line-height: 1.3; }
+
+/* ===== Team Org Tab ===== */
+.org-header { background: linear-gradient(135deg, #1F4E79, #2c6bad); color: #fff; border-radius: 10px; padding: 24px 28px; margin-bottom: 20px; text-align: center; }
+.org-header h2 { font-size: 20px; margin-bottom: 4px; }
+.org-leader-card { background: #fff; border-radius: 10px; padding: 20px; text-align: center; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,.08); max-width: 300px; margin-left: auto; margin-right: auto; border: 2px solid #C00000; }
+.org-avatar { width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, #C00000, #8B0000); color: #fff; font-size: 28px; font-weight: 700; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; }
+.org-leader-card h3 { font-size: 18px; color: #333; margin-bottom: 4px; }
+.org-leader-card .leader-role { font-size: 13px; color: #C00000; font-weight: 600; }
+.org-connector { text-align: center; margin: 0 0 20px; }
+.org-connector svg { display: block; margin: 0 auto; }
+.org-teams { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-bottom: 24px; }
+.org-team-card { background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+.org-team-header { padding: 14px 18px; color: #fff; display: flex; align-items: center; gap: 10px; }
+.org-team-header .team-icon { font-size: 24px; }
+.org-team-header h4 { font-size: 15px; margin: 0; }
+.org-team-body { padding: 16px 18px; }
+.org-team-lead { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #f0f0f0; }
+.org-team-lead .lead-name { font-weight: 700; font-size: 14px; color: #333; }
+.org-team-lead .lead-role { font-size: 11px; color: #888; }
+.org-team-count { font-size: 12px; color: #666; margin-bottom: 10px; }
+.org-duties { display: flex; flex-wrap: wrap; gap: 6px; }
+.org-duty-tag { font-size: 11px; padding: 3px 10px; border-radius: 12px; background: #f0f4f8; color: #444; border: 1px solid #e0e0e0; }
+.org-incentive { background: #fff8e1; border: 1px solid #ffe082; border-radius: 10px; padding: 18px 22px; }
+.org-incentive h3 { font-size: 16px; color: #f57f17; margin-bottom: 12px; }
+.org-incentive ul { padding-left: 20px; }
+.org-incentive li { font-size: 13px; line-height: 1.8; color: #555; }
+
+/* ===== Responsive ===== */
+@media (max-width: 1200px) {
+  .stats-grid { grid-template-columns: repeat(3, 1fr); }
+  .container { padding: 12px; }
+}
+@media (max-width: 768px) {
+  .header { padding: 12px 16px; }
+  .header h1 { font-size: 16px; }
+  .header .btn-group { float: none; margin-top: 8px; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .row { flex-direction: column; }
+  .tabs { gap: 0; }
+  .tab { padding: 6px 12px; font-size: 12px; }
+  .contact-stats { flex-wrap: wrap; }
+  .contact-stat { min-width: 120px; }
+  .dyn-summary-grid { grid-template-columns: repeat(2, 1fr); }
+}
+/* ===== Tooltip ===== */
+.chart-tooltip {
+  position: fixed; background: #333; color: #fff; padding: 10px 14px;
+  border-radius: 6px; font-size: 12px; line-height: 1.6; max-width: 360px;
+  z-index: 3000; pointer-events: none; box-shadow: 0 4px 12px rgba(0,0,0,.3);
+  display: none;
+}
+.chart-tooltip .tt-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+.chart-tooltip .tt-status { font-size: 11px; opacity: .85; }
+.chart-tooltip .tt-detail { margin-top: 6px; border-top: 1px solid rgba(255,255,255,.2); padding-top: 6px; }
+/* ===== Print ===== */
+@media print {
+  .header .btn-group, .upload-zone, .export-btn { display: none !important; }
+  .card { box-shadow: none; border: 1px solid #ddd; }
+  body { background: white; }
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<div class="header">
+  <h1>派克新材 × 商飞供应商准入认证 · 智能BI看板</h1>
+  <div class="meta">
+    <span>最后更新: <span id="lastUpdated">—</span></span>
+    <span>已处理文档: <span id="docCount">0</span> 份</span>
+    <span>追踪节点: <span id="nodeCount">0</span> 个</span>
+  </div>
+  <div class="btn-group">
+    <button class="btn" onclick="exportPNG()">导出图片</button>
+    <button class="btn btn-primary" onclick="exportXLSX()">导出Excel</button>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- Row 1: Stats + Upload -->
+  <div class="row">
+    <div class="col" style="flex: 3;">
+      <div class="card">
+        <div class="card-header">状态统计</div>
+        <div class="card-body">
+          <div class="stats-grid" id="statsGrid"></div>
+        </div>
+      </div>
+    </div>
+    <div class="col" style="flex: 2;">
+      <div class="card">
+        <div class="card-header">上传新资料 · 智能分析</div>
+        <div class="card-body">
+          <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+            <div class="icon">📎</div>
+            <div class="hint">拖拽文件到此处，或点击选择文件</div>
+            <div class="formats">放入 BI_共享上传 文件夹 → BI更新智能体自动处理</div>
+          </div>
+          <input type="file" id="fileInput" multiple accept=".docx,.xlsx,.pdf,.doc" style="display:none">
+          <div id="uploadStatus" style="margin-top:10px;font-size:12px;color:#666;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 2: Tabs for Chart / Table / Summary / Documents -->
+  <div class="card">
+    <div class="card-body">
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab('chart')">进度流程图</div>
+        <div class="tab" onclick="switchTab('table')">进度汇总表</div>
+        <div class="tab" onclick="switchTab('summary')">核心卡点</div>
+        <div class="tab" onclick="switchTab('contacts')">关键部门接触</div>
+        <div class="tab" onclick="switchTab('competitors')">竞争对手分析</div>
+        <div class="tab" onclick="switchTab('dynamics')">商飞动态监测</div>
+        <div class="tab" onclick="switchTab('plan')">项目推进思路</div>
+        <div class="tab" onclick="switchTab('team')">团队组织架构</div>
+        <div class="tab" onclick="switchTab('docs')">文档库</div>
+      </div>
+
+      <!-- Tab: Chart -->
+      <div class="tab-content active" id="tab-chart">
+        <div class="chart-container" id="chartContainer"></div>
+      </div>
+
+      <!-- Tab: Table -->
+      <div class="tab-content" id="tab-table">
+        <div style="overflow-x:auto;">
+          <table class="tbl" id="progressTable"></table>
+        </div>
+      </div>
+
+      <!-- Tab: Summary -->
+      <div class="tab-content" id="tab-summary">
+        <table class="summary-tbl" id="summaryTable"></table>
+      </div>
+
+      <!-- Tab: Contacts -->
+      <div class="tab-content" id="tab-contacts">
+        <div id="contactsContent"></div>
+      </div>
+
+      <!-- Tab: Competitors -->
+      <div class="tab-content" id="tab-competitors">
+        <div id="competitorsContent"></div>
+      </div>
+
+      <!-- Tab: Plan -->
+      <div class="tab-content" id="tab-plan">
+        <div id="planContent"></div>
+      </div>
+
+      <!-- Tab: Team -->
+      <div class="tab-content" id="tab-team">
+        <div id="teamContent"></div>
+      </div>
+
+      <!-- Tab: Dynamics -->
+      <div class="tab-content" id="tab-dynamics">
+        <div id="dynamicsContent"></div>
+      </div>
+
+      <!-- Tab: Documents -->
+      <div class="tab-content" id="tab-docs">
+        <table class="doc-tbl" id="docTable">
+          <thead><tr><th>文件名</th><th>日期</th><th>类型</th><th>状态</th></tr></thead>
+          <tbody id="docTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Modal: Analysis Results -->
+<div class="modal-overlay" id="analysisModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>文档分析结果</h3>
+      <span class="modal-close" onclick="closeModal('analysisModal')">&times;</span>
+    </div>
+    <div class="modal-body" id="analysisBody"></div>
+  </div>
+</div>
+
+<!-- Modal: Edit Node -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal" style="max-width:600px;">
+    <div class="modal-header">
+      <h3>编辑节点</h3>
+      <span class="modal-close" onclick="closeModal('editModal')">&times;</span>
+    </div>
+    <div class="modal-body">
+      <div class="edit-form" id="editForm"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let DATA = {};
+async function init() {
+  try {
+    const resp = await fetch('data.json');
+    DATA = await resp.json();
+    if (DATA.comacOwnerMap) {
+      for (const n of DATA.nodes) {
+        if (DATA.comacOwnerMap[n.id]) { n.comacOwner = DATA.comacOwnerMap[n.id]; }
+      }
+    }
+    renderAll();
+    setupStaticUpload();
+  } catch(e) {
+    console.error('Failed to load data.json:', e);
+    document.body.innerHTML = '<div style="padding:40px;text-align:center;color:#e74c3c;font-size:18px;">\u6570\u636e\u52a0\u8f7d\u5931\u8d25\uff0c\u8bf7\u786e\u8ba4 data.json \u6587\u4ef6\u5b58\u5728</div>';
+  }
+}
+
+// ================================================================
+// 全局数据
+// ================================================================
+const STATUS_KEYS = ["done", "private", "fail", "notstarted", "unreached"];
+
+
+
+
+// ================================================================
+// 初始化
+// ================================================================
+
+function renderAll() {
+  document.getElementById("lastUpdated").textContent = formatTime(DATA.meta.lastUpdated);
+  document.getElementById("docCount").textContent = DATA.documents.length;
+  document.getElementById("nodeCount").textContent = DATA.nodes.length;
+  renderStats();
+  renderChart();
+  renderTable();
+  renderSummary();
+  renderContacts();
+  renderCompetitors();
+  renderDynamics();
+  renderProjectPlan();
+  renderTeamOrg();
+  renderDocs();
+}
+
+// ================================================================
+// 状态统计
+// ================================================================
+function renderStats() {
+  const counts = { done: 0, private: 0, fail: 0, notstarted: 0, unreached: 0 };
+  for (const n of DATA.nodes) {
+    if (counts[n.status] !== undefined) counts[n.status]++;
+  }
+  const html = STATUS_KEYS.map(k => {
+    const s = DATA.statusTypes[k];
+    return `<div class="stat-item" style="background:${s.color};color:${s.textColor}">
+      <div class="num">${counts[k]}</div>
+      <div class="lbl">${s.label}</div>
+    </div>`;
+  }).join("");
+  document.getElementById("statsGrid").innerHTML = html;
+}
+
+// ================================================================
+// SVG 进度流程图
+// ================================================================
+function renderChart() {
+  const phases = DATA.phases;
+  const nodes = DATA.nodes;
+
+  // 画布参数
+  const colW = 240;
+  const colGap = 30;
+  const nodeH = 38;
+  const nodeGap = 8;
+  const headerH = 50;
+  const titleH = 40;
+  const legendH = 30;
+  const bottomH = 20;
+  const padX = 30;
+  const padY = 20;
+
+  // 每个阶段的节点
+  const phaseNodes = {};
+  for (const p of phases) phaseNodes[p.id] = [];
+  for (const n of nodes) {
+    if (phaseNodes[n.phase]) phaseNodes[n.phase].push(n);
+  }
+
+  const maxNodes = Math.max(...Object.values(phaseNodes).map(arr => arr.length));
+  const chartW = phases.length * colW + (phases.length - 1) * colGap + padX * 2;
+  const chartH = titleH + legendH + headerH + maxNodes * (nodeH + nodeGap) + bottomH + padY * 2;
+
+  let svg = `<svg viewBox="0 0 ${chartW} ${chartH}" width="${chartW}" style="min-width:100%;max-width:${chartW}px;font-family:'Microsoft YaHei',sans-serif;">`;
+
+  // 背景
+  svg += `<rect width="${chartW}" height="${chartH}" fill="white"/>`;
+
+  // 标题
+  svg += `<text x="${chartW/2}" y="${padY + 20}" text-anchor="middle" font-size="16" font-weight="bold" fill="#C00000">派克新材 × 商飞供应商准入认证 · 进度流程图</text>`;
+
+  // 图例
+  let legendX = padX;
+  const legendY = padY + titleH + 12;
+  for (const k of STATUS_KEYS) {
+    const s = DATA.statusTypes[k];
+    svg += `<rect x="${legendX}" y="${legendY}" width="14" height="14" rx="2" fill="${s.color}" stroke="#999" stroke-width="0.5"/>`;
+    svg += `<text x="${legendX + 18}" y="${legendY + 12}" font-size="11" fill="#333">${s.label}</text>`;
+    legendX += s.label.length * 14 + 36;
+  }
+
+  // 阶段列
+  const colY = padY + titleH + legendH;
+  for (let i = 0; i < phases.length; i++) {
+    const p = phases[i];
+    const x = padX + i * (colW + colGap);
+    const pNodes = phaseNodes[p.id] || [];
+
+    // 列背景
+    svg += `<rect x="${x}" y="${colY}" width="${colW}" height="${headerH + maxNodes * (nodeH + nodeGap)}" fill="${p.color}" fill-opacity="0.3" rx="6"/>`;
+
+    // 列头
+    svg += `<rect x="${x}" y="${colY}" width="${colW}" height="${headerH}" fill="${p.headerColor}" rx="6"/>`;
+    svg += `<rect x="${x}" y="${colY + headerH - 6}" width="${colW}" height="6" fill="${p.headerColor}"/>`;
+    svg += `<text x="${x + colW/2}" y="${colY + 22}" text-anchor="middle" font-size="14" font-weight="bold" fill="white">${p.name}</text>`;
+    svg += `<text x="${x + colW/2}" y="${colY + 40}" text-anchor="middle" font-size="11" fill="rgba(255,255,255,0.8)">${p.id}</text>`;
+
+    // 节点
+    for (let j = 0; j < pNodes.length; j++) {
+      const n = pNodes[j];
+      const ny = colY + headerH + j * (nodeH + nodeGap);
+      const st = DATA.statusTypes[n.status];
+      const isMilestone = n.isMilestone;
+
+      // 节点框
+      const strokeColor = isMilestone ? "#C00000" : "#bbb";
+      const strokeWidth = isMilestone ? 2 : 1;
+      svg += `<rect x="${x + 8}" y="${ny}" width="${colW - 16}" height="${nodeH}" rx="4" fill="${st.color}" stroke="${strokeColor}" stroke-width="${strokeWidth}" class="chart-node" data-id="${n.id}" style="cursor:pointer;transition:all .2s;" onmouseover="showNodeTip(event,${n.id})" onmouseout="hideNodeTip()" onclick="editNode(${n.id})"/>`;
+
+      // 序号
+      svg += `<text x="${x + 16}" y="${ny + 16}" font-size="10" fill="${st.textColor}" opacity="0.7">${n.sequence}</text>`;
+
+      // 节点名称
+      const nameDisplay = n.name.length > 14 ? n.name.substring(0, 13) + "…" : n.name;
+      svg += `<text x="${x + colW/2}" y="${ny + 23}" text-anchor="middle" font-size="12" font-weight="${isMilestone ? 'bold' : 'normal'}" fill="${st.textColor}">${nameDisplay}</text>`;
+
+      // 状态标签
+      svg += `<text x="${x + colW/2}" y="${ny + 34}" text-anchor="middle" font-size="9" fill="${st.textColor}" opacity="0.7">${st.label}</text>`;
+    }
+
+    // 阶段间箭头
+    if (i < phases.length - 1) {
+      const arrowX = x + colW;
+      const arrowY = colY + headerH / 2;
+      svg += `<path d="M${arrowX},${arrowY} L${arrowX + colGap},${arrowY}" stroke="#999" stroke-width="2" marker-end="url(#arrowhead)"/>`;
+    }
+  }
+
+  // 箭头标记定义
+  svg += `<defs><marker id="arrowhead" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#999"/></marker></defs>`;
+
+  svg += `</svg>`;
+  document.getElementById("chartContainer").innerHTML = svg;
+}
+
+// ================================================================
+// 进度表
+// ================================================================
+function renderTable() {
+  const phaseNames = {};
+  for (const p of DATA.phases) phaseNames[p.id] = p.name;
+
+  let html = `<thead><tr>
+    <th style="width:120px;">阶段</th>
+    <th style="width:50px;">序号</th>
+    <th style="width:200px;">关键环节</th>
+    <th style="width:100px;">派克状态</th>
+    <th>派克实情/卡点</th>
+    <th style="width:180px;">商飞对口部门/负责人</th>
+    <th style="width:200px;">资料出处</th>
+  </tr></thead><tbody>`;
+
+  let lastPhase = null;
+  for (const n of DATA.nodes) {
+    const st = DATA.statusTypes[n.status];
+    const phaseLabel = n.phase !== lastPhase ? phaseNames[n.phase] : "";
+    lastPhase = n.phase;
+    const cls = n.isMilestone ? " milestone-row" : "";
+
+    html += `<tr class="${cls}">
+      <td class="phase-cell" style="background:${DATA.phases.find(p=>p.id===n.phase)?.color || ''}">${phaseLabel}</td>
+      <td class="seq-cell">${n.sequence}</td>
+      <td>${n.name}</td>
+      <td class="status-cell" style="background:${st.color};color:${st.textColor};" onclick="editNode(${n.id})">${st.label}</td>
+      <td class="detail-cell">${n.detail}</td>
+      <td style="font-size:11px;">${n.comacOwner ? n.comacOwner.dept + '<br><b>' + n.comacOwner.person + '</b>' : '—'}</td>
+      <td class="source-cell">${n.sources.join(" / ")}</td>
+    </tr>`;
+  }
+
+  html += `</tbody>`;
+  document.getElementById("progressTable").innerHTML = html;
+}
+
+// ================================================================
+// 核心卡点摘要
+// ================================================================
+function renderSummary() {
+  let html = `<thead><tr>
+    <th style="width:140px;">项目</th>
+    <th style="width:160px;">结论</th>
+    <th>详情</th>
+  </tr></thead><tbody>`;
+  for (const s of DATA.summary) {
+    html += `<tr>
+      <td class="sum-label">${s.label}</td>
+      <td class="sum-value">${s.value}</td>
+      <td>${s.detail}</td>
+    </tr>`;
+  }
+  html += `</tbody>`;
+  document.getElementById("summaryTable").innerHTML = html;
+}
+
+// ================================================================
+// 文档库
+// ================================================================
+function renderDocs() {
+  let html = "";
+  for (const d of DATA.documents) {
+    html += `<tr>
+      <td>${d.filename}</td>
+      <td>${d.date}</td>
+      <td>${d.type}</td>
+      <td>${d.processed ? "✅ 已处理" : "⏳ 待处理"}</td>
+    </tr>`;
+  }
+  document.getElementById("docTableBody").innerHTML = html;
+}
+
+// ================================================================
+// 文件上传
+// ================================================================
+function setupStaticUpload() {
+  // 静态部署版：上传区显示说明
+  const zone = document.getElementById("uploadZone");
+  zone.innerHTML = `
+    <div class="icon">📁</div>
+    <div style="font-size:15px;font-weight:600;color:#333;margin-bottom:8px;">新资料上传方式</div>
+    <div style="font-size:13px;color:#666;line-height:1.8;max-width:500px;margin:0 auto;">
+      将新的商飞交流记录、认证文件等资料复制到项目目录下的<br>
+      <code style="background:#f0f0f0;padding:2px 8px;border-radius:4px;font-size:13px;">BI_共享上传</code> 文件夹中<br>
+      <strong style="color:#dc3545;">BI更新智能体</strong>会自动检测并解析文档内容，更新本看板<br><br>
+      <span style="font-size:12px;color:#999;">支持格式：.docx / .xlsx / .pdf</span>
+    </div>
+  `;
+  zone.style.cursor = "default";
+  zone.onclick = null;
+}
+
+// 静态部署版：handleFiles已禁用，上传通过共享文件夹完成
+async function handleFiles(files) {
+  showToast("请将文件放入 BI_共享上传 文件夹，BI更新智能体会自动处理", "info");
+}
+
+// ================================================================
+// 分析结果展示
+// ================================================================
+function showAnalysis(results) {
+  let html = "";
+
+  for (const r of results) {
+    html += `<div class="analysis-file">`;
+    html += `<div class="analysis-file-header"><span>${r.filename}</span>`;
+
+    if (r.error) {
+      html += `<span style="color:#f5222d;">❌ ${r.error}</span></div>`;
+      html += `<div class="analysis-file-body"><p style="color:#999;">该文件无法解析，请检查格式。</p></div>`;
+    } else {
+      html += `<span style="font-size:12px;color:#666;">${r.textLength} 字</span></div>`;
+      html += `<div class="analysis-file-body">`;
+
+      // 元信息
+      const a = r.analysis;
+      html += `<div class="analysis-meta">`;
+      if (a.dates.length > 0) html += `<span>📅 ${[...new Set(a.dates)].slice(0, 5).join(" / ")}</span>`;
+      if (a.persons.length > 0) html += `<span>👤 ${a.persons.join(" / ")}</span>`;
+      if (a.terms.length > 0) html += `<span>🏷️ ${a.terms.join(" / ")}</span>`;
+      html += `</div>`;
+
+      // 文本预览
+      html += `<details style="margin-bottom:12px;"><summary style="cursor:pointer;font-size:12px;color:#666;">查看文档原文预览</summary><div style="margin-top:8px;padding:10px;background:#f9f9f9;border-radius:4px;font-size:12px;max-height:200px;overflow-y:auto;line-height:1.6;">${r.textPreview}</div></details>`;
+
+      // 匹配节点
+      if (a.matchedNodes.length === 0) {
+        html += `<p style="color:#999;">未匹配到已知节点关键词。</p>`;
+      } else {
+        html += `<h4 style="margin-bottom:10px;">匹配到的进度节点（${a.matchedNodes.length} 个）</h4>`;
+        for (const mn of a.matchedNodes) {
+          const st = DATA.statusTypes[mn.currentStatus];
+          html += `<div class="matched-node" style="border-color:${st.color};">`;
+          html += `<div class="matched-node-header">`;
+          html += `<span class="matched-node-name">[${mn.nodeId}] ${mn.nodeName}</span>`;
+          html += `<span class="matched-node-hits">当前状态: ${st.label} · 命中 ${mn.totalHits} 次</span>`;
+          html += `</div>`;
+
+          // 关键词标签
+          html += `<div class="matched-keywords">`;
+          for (const mk of mn.matchedKeywords) {
+            html += `<span class="kw-tag">${mk.keyword} (${mk.count})</span>`;
+          }
+          html += `</div>`;
+
+          // 上下文
+          for (const ctx of mn.contexts) {
+            html += `<div class="context-block">${ctx}</div>`;
+          }
+
+          // 状态建议
+          if (mn.suggestedStatus) {
+            const newSt = DATA.statusTypes[mn.suggestedStatus.status];
+            html += `<div class="suggestion-box apply">`;
+            html += `<span>💡 建议更新状态为「<strong style="color:${newSt.textColor}">${newSt.label}</strong>」— ${mn.suggestedStatus.reason}</span>`;
+            html += `<button class="btn-apply" onclick="applySuggestion(${mn.nodeId}, '${mn.suggestedStatus.status}')">采纳</button>`;
+            html += `</div>`;
+          }
+
+          html += `</div>`;
+        }
+      }
+
+      html += `</div>`;
+    }
+    html += `</div>`;
+  }
+
+  document.getElementById("analysisBody").innerHTML = html;
+  openModal("analysisModal");
+}
+
+// ================================================================
+// 采纳建议
+// ================================================================
+function applySuggestion(nodeId, newStatus) {
+  const node = DATA.nodes.find(n => n.id === nodeId);
+  if (node) {
+    node.status = newStatus;
+    renderAll();
+    showToast("节点状态已更新（本地）", "success");
+  }
+}
+
+// ================================================================
+// 编辑节点
+// ================================================================
+function editNode(nodeId) {
+  const node = DATA.nodes.find(n => n.id === nodeId);
+  if (!node) return;
+
+  const stOptions = STATUS_KEYS.map(k => {
+    const s = DATA.statusTypes[k];
+    return `<option value="${k}" ${k === node.status ? "selected" : ""}>${s.icon} ${s.label}</option>`;
+  }).join("");
+
+  document.getElementById("editForm").innerHTML = `
+    <input type="hidden" id="editNodeId" value="${nodeId}">
+    <label>节点名称</label>
+    <input type="text" value="${node.name}" id="editName" readonly style="background:#f5f5f5;">
+    <label>状态</label>
+    <select id="editStatus">${stOptions}</select>
+    <label>派克实情/卡点</label>
+    <textarea id="editDetail">${node.detail}</textarea>
+    <label>资料出处（每行一条）</label>
+    <textarea id="editSources" style="min-height:60px;">${node.sources.join("\n")}</textarea>
+    <button class="btn btn-primary" style="width:100%;padding:10px;border:none;border-radius:4px;font-size:14px;cursor:pointer;" onclick="saveNodeEdit()">保存修改</button>
+  `;
+  openModal("editModal");
+}
+
+function saveNodeEdit() {
+  const nodeId = parseInt(document.getElementById("editNodeId").value);
+  const status = document.getElementById("editStatus").value;
+  const detail = document.getElementById("editDetail").value;
+  const sources = document.getElementById("editSources").value.split("\n").map(s => s.trim()).filter(s => s);
+
+  const node = DATA.nodes.find(n => n.id === nodeId);
+  if (node) {
+    node.status = status;
+    node.detail = detail;
+    if (sources.length) node.sources = sources;
+    renderAll();
+    closeModal("editModal");
+    showToast("节点已更新（本地）", "success");
+  } else {
+    showToast("未找到节点", "error");
+  }
+}
+
+// ================================================================
+// 导出
+// ================================================================
+function exportXLSX() {
+  const ws = XLSX.utils.json_to_sheet(DATA.nodes.map(n => ({
+    "阶段": n.phase, "序号": n.sequence, "节点": n.name,
+    "状态": n.status === "done" ? "✅已完成" : n.status === "private" ? "🟡私下推进" :
+            n.status === "fail" ? "🔴发起未通过" : n.status === "notstarted" ? "⬜未启动" : "⚪未触及",
+    "详情": n.detail || ""
+  })));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "进度汇总表");
+  XLSX.writeFile(wb, "派克新材_商飞准入进度汇总表.xlsx");
+}
+
+function exportPNG() {
+  // 将当前可见的 tab 内容导出为 PNG
+  const activeTab = document.querySelector(".tab-content.active");
+  if (!activeTab) return;
+
+  // 使用 canvas 截图
+  const container = activeTab;
+  const svg = container.querySelector("svg");
+
+  if (svg) {
+    // SVG 导出
+    const svgData = new XMLSerializer().serializeToString(svg);
+    const img = new Image();
+    const blob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      const scale = 2;
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.scale(scale, scale);
+      ctx.drawImage(img, 0, 0);
+      canvas.toBlob(blob => {
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "派克新材_商飞准入进度流程图.png";
+        a.click();
+        URL.revokeObjectURL(a.href);
+        showToast("图片已导出", "success");
+      });
+      URL.revokeObjectURL(url);
+    };
+    img.src = url;
+  } else {
+    // 表格导出：用 html2canvas 替代方案（简易版）
+    showToast("当前标签页不支持直接导出图片，请切换到「进度流程图」标签", "error");
+  }
+}
+
+// ================================================================
+// 工具函数
+// ================================================================
+function switchTab(name) {
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  document.querySelectorAll(".tab-content").forEach(t => t.classList.remove("active"));
+  event.target.classList.add("active");
+  document.getElementById("tab-" + name).classList.add("active");
+}
+
+function openModal(id) { document.getElementById(id).classList.add("show"); }
+function closeModal(id) { document.getElementById(id).classList.remove("show"); }
+
+function formatTime(iso) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  return d.toLocaleString("zh-CN", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
+}
+
+function showToast(msg, type) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = "toast show " + (type || "");
+  setTimeout(() => t.classList.remove("show"), 3000);
+}
+
+// 点击 modal 背景关闭
+document.querySelectorAll(".modal-overlay").forEach(m => {
+  m.addEventListener("click", e => { if (e.target === m) m.classList.remove("show"); });
+});
+
+// ================================================================
+// 关键部门接触状态
+// ================================================================
+function renderContacts() {
+  const c = DATA.contacts;
+  if (!c) { document.getElementById("contactsContent").innerHTML = "<p>暂无数据</p>"; return; }
+
+  const st = c.statusTypes || {};
+  const stKeys = ["approved", "contacted", "unreached"];
+
+  // 统计
+  const counts = { approved: 0, contacted: 0, unreached: 0 };
+  for (const p of c.people) { if (counts[p.status] !== undefined) counts[p.status]++; }
+
+  let html = "";
+
+  // 统计卡片
+  html += `<div class="contact-stats">`;
+  for (const k of stKeys) {
+    const s = st[k];
+    html += `<div class="contact-stat" style="background:${s.color};color:${s.textColor}">
+      <div class="num">${counts[k]}</div>
+      <div class="lbl">${s.icon} ${s.label}</div>
+    </div>`;
+  }
+  html += `<div class="contact-stat" style="background:#f5f5f5;color:#333">
+    <div class="num">${c.people.length}</div>
+    <div class="lbl">总计</div>
+  </div>`;
+  html += `</div>`;
+
+  // 导出按钮
+  html += `<div><button class="export-btn" onclick="exportContactsXLSX()">📥 导出接触状态表 Excel</button></div>`;
+
+  // 组织架构图
+  if (c.chartImage) {
+    html += `<div class="contact-img-box"><img src="${c.chartImage}" alt="接触状态图" style="max-width:100%;"/></div>`;
+  }
+
+  // 接触状态表
+  html += `<div style="overflow-x:auto;"><table class="contact-tbl"><thead><tr>
+    <th>序号</th><th>层级</th><th>部门</th><th>职务</th><th>姓名</th>
+    <th>在准入流程中的关键作用</th><th>接触状态</th><th>接触时间/方式</th><th>关键信息与态度</th>
+  </tr></thead><tbody>`;
+
+  for (const p of c.people) {
+    const s = st[p.status] || { label: p.status, color: "#fff", textColor: "#333" };
+    html += `<tr>
+      <td style="text-align:center;font-weight:600;">${p.id}</td>
+      <td style="text-align:center;white-space:nowrap;">${p.level}</td>
+      <td>${p.department}</td>
+      <td>${p.title}</td>
+      <td style="font-weight:600;">${p.name}</td>
+      <td>${p.role}</td>
+      <td class="status-cell" style="background:${s.color};color:${s.textColor};">${s.icon} ${s.label}</td>
+      <td style="font-size:11px;">${p.contactInfo}</td>
+      <td style="font-size:11px;">${p.detail}</td>
+    </tr>`;
+  }
+  html += `</tbody></table></div>`;
+
+  // 核心结论
+  if (c.conclusions && c.conclusions.length > 0) {
+    html += `<div class="contact-conclusion"><h4>★ 核心结论</h4><ol>`;
+    for (const ccl of c.conclusions) {
+      html += `<li>${ccl}</li>`;
+    }
+    html += `</ol></div>`;
+  }
+
+  document.getElementById("contactsContent").innerHTML = html;
+}
+
+// ================================================================
+// 竞争对手分析
+// ================================================================
+function renderCompetitors() {
+  const comp = DATA.competitors;
+  if (!comp) { document.getElementById("competitorsContent").innerHTML = "<p>暂无数据</p>"; return; }
+
+  let html = "";
+
+  // 导出按钮
+  html += `<div><button class="export-btn" onclick="exportCompetitorsXLSX()">📥 导出竞争对手分析表 Excel</button></div>`;
+
+  // 子标签
+  html += `<div class="comp-sub-tabs">
+    <div class="comp-sub-tab active" onclick="switchCompTab('timeline', this)">认证时间表</div>
+    <div class="comp-sub-tab" onclick="switchCompTab('routes', this)">认证路线模式</div>
+    <div class="comp-sub-tab" onclick="switchCompTab('experiences', this)">派克可借鉴经验</div>
+  </div>`;
+
+  // 子内容1: 时间表
+  html += `<div class="comp-sub-content active" id="comp-tab-timeline">`;
+  html += `<div style="overflow-x:auto;"><table class="comp-tbl"><thead><tr>
+    <th>序号</th><th>企业名称</th><th>国别</th><th>主营产品</th>
+    <th>GSL</th><th>PSL</th><th>ACL</th><th>QSL</th><th>总周期</th>
+    <th>认证路线模式</th><th>关键事件/里程碑</th><th>可借鉴经验</th><th>信息来源</th>
+  </tr></thead><tbody>`;
+
+  for (const c of comp.companies) {
+    const countryColor = c.country === "中国" ? "#e8f5e9" : "#e3f2fd";
+    html += `<tr>
+      <td style="text-align:center;font-weight:600;">${c.id}</td>
+      <td style="font-weight:600;white-space:nowrap;">${c.name}</td>
+      <td style="text-align:center;background:${countryColor};">${c.country}</td>
+      <td style="white-space:pre-line;">${c.product}</td>
+      <td style="text-align:center;color:${c.gsl === '待查证' ? '#999' : '#333'};">${c.gsl}</td>
+      <td style="text-align:center;color:${c.psl === '待查证' ? '#999' : '#333'};">${c.psl}</td>
+      <td style="text-align:center;color:${c.acl === '待查证' ? '#999' : '#333'};">${c.acl}</td>
+      <td style="text-align:center;color:${c.qsl.startsWith('待查证') ? '#999' : '#006100'};">${c.qsl}</td>
+      <td style="text-align:center;">${c.duration}</td>
+      <td style="white-space:pre-line;font-weight:600;">${c.route}</td>
+      <td style="white-space:pre-line;">${c.milestones}</td>
+      <td style="white-space:pre-line;">${c.lessons}</td>
+      <td style="font-size:10px;color:#888;">${c.source}</td>
+    </tr>`;
+  }
+  html += `</tbody></table></div>`;
+  html += `</div>`;
+
+  // 子内容2: 路线模式
+  html += `<div class="comp-sub-content" id="comp-tab-routes">`;
+  for (const r of comp.routes) {
+    html += `<div class="comp-route-card">
+      <h4>模式${r.id}：${r.name}</h4>
+      <div class="route-meta"><strong>适用企业类型：</strong>${r.applicableType}<br><strong>典型企业：</strong>${r.examples}</div>
+      <div class="route-features">${r.features}</div>
+    </div>`;
+  }
+  html += `</div>`;
+
+  // 子内容3: 借鉴经验
+  html += `<div class="comp-sub-content" id="comp-tab-experiences">`;
+  for (const e of comp.experiences) {
+    html += `<div class="comp-exp-card">
+      <h4>${e.id} · ${e.category}</h4>
+      <p>${e.detail}</p>
+      <div class="ref">参考企业：${e.references}</div>
+    </div>`;
+  }
+  if (comp.conclusion) {
+    html += `<div class="comp-conclusion-box">${comp.conclusion}</div>`;
+  }
+  html += `</div>`;
+
+  document.getElementById("competitorsContent").innerHTML = html;
+}
+
+function switchCompTab(name, el) {
+  document.querySelectorAll(".comp-sub-tab").forEach(t => t.classList.remove("active"));
+  document.querySelectorAll(".comp-sub-content").forEach(t => t.classList.remove("active"));
+  el.classList.add("active");
+  document.getElementById("comp-tab-" + name).classList.add("active");
+}
+
+// ================================================================
+// 导出接触状态和竞争对手
+// ================================================================
+function exportContactsXLSX() {
+  const ws = XLSX.utils.json_to_sheet(DATA.contacts.people.map(p => ({
+    "层级": p.level, "部门": p.department, "职务": p.title, "姓名": p.name,
+    "接触状态": p.status, "关键作用": p.role, "接触时间": p.contactInfo, "关键信息": p.detail || ""
+  })));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "接触状态表");
+  XLSX.writeFile(wb, "派克新材_商飞关键部门领导接触状态表.xlsx");
+}
+
+function exportCompetitorsXLSX() {
+  const wb = XLSX.utils.book_new();
+  const ws1 = XLSX.utils.json_to_sheet(DATA.competitors.companies.map(c => ({
+    "企业": c.name, "国别": c.country, "主营产品": c.product,
+    "路线模式": c.routeMode || "", "关键事件": c.milestones || "",
+    "借鉴经验": c.lessons || "", "信息来源": c.source || ""
+  })));
+  XLSX.utils.book_append_sheet(wb, ws1, "认证时间表");
+  const ws2 = XLSX.utils.json_to_sheet(DATA.competitors.routes.map(r => ({
+    "模式": r.name || r.mode || "", "代表企业": r.examples || "",
+    "特征": r.features || "", "适用性": r.applicableType || ""
+  })));
+  XLSX.utils.book_append_sheet(wb, ws2, "路线模式");
+  const ws3 = XLSX.utils.json_to_sheet(DATA.competitors.experiences.map(e => ({
+    "经验": e.category || "", "详情": e.detail || ""
+  })));
+  XLSX.utils.book_append_sheet(wb, ws3, "借鉴经验");
+  XLSX.writeFile(wb, "商飞已认证供应商竞争对手_认证时间表与借鉴经验.xlsx");
+}
+
+// ================================================================
+// 商飞动态监测
+// ================================================================
+let dynChartInstance = null;
+
+function renderDynamics() {
+  const dyn = DATA.dynamics;
+  if (!dyn) return;
+
+  // 1. 汇总卡片
+  let summaryHtml = '<div class="dyn-summary-grid">';
+  for (const s of (dyn.summary || [])) {
+    summaryHtml += `<div class="dyn-summary-card"><div class="num">${s.value}</div><div class="lbl">${s.label}</div></div>`;
+  }
+  summaryHtml += '</div>';
+
+  // 2. 产能折线图
+  const production = dyn.production || {};
+  const years = production.years || [];
+  const datasets = [];
+  const colors = { C919: '#d32f2f', ARJ21: '#1565c0', C929: '#7b1fa2' };
+
+  for (const model of (production.models || [])) {
+    const c = colors[model.name] || '#666';
+    // 实际交付（实线）
+    datasets.push({
+      label: model.name + ' (实际)',
+      data: model.actual,
+      borderColor: c,
+      backgroundColor: c + '20',
+      borderWidth: 2.5,
+      borderDash: [],
+      pointRadius: 4,
+      pointBackgroundColor: c,
+      tension: 0.3,
+      fill: false
+    });
+    // 预测（虚线）
+    datasets.push({
+      label: model.name + ' (预测)',
+      data: model.forecast,
+      borderColor: c,
+      backgroundColor: c + '10',
+      borderWidth: 2,
+      borderDash: [6, 4],
+      pointRadius: 3,
+      pointBackgroundColor: c + '99',
+      tension: 0.3,
+      fill: false
+    });
+  }
+
+  const chartHtml = `
+    <div class="dyn-chart-legend">
+      <span><span class="dot" style="background:#d32f2f"></span>C919</span>
+      <span><span class="dot" style="background:#1565c0"></span>ARJ21</span>
+      <span><span class="dot" style="background:#7b1fa2"></span>C929</span>
+      <span style="margin-left:20px">─── 实际交付</span>
+      <span>- - - 预测产能</span>
+    </div>
+    <div class="dyn-chart-wrap"><canvas id="dynChart"></canvas></div>
+  `;
+
+  // 3. 资讯列表
+  let newsHtml = '<ul class="dyn-news-list">';
+  for (const n of (dyn.newsItems || dyn.news || [])) {
+    const tagClass = 'dyn-tag-' + (n.category || 'market');
+    const tagLabel = { policy: '政策/规定', supply: '供应链', tech: '技术动态', market: '市场动态' }[n.category] || '动态';
+    newsHtml += `
+      <li class="dyn-news-item">
+        <span class="dyn-news-tag ${tagClass}">${tagLabel}</span>
+        <span class="dyn-news-date">${n.date || ''}</span>
+        <div class="dyn-news-title">${n.title}</div>
+        <div class="dyn-news-desc">${n.description || ''}</div>
+        ${n.source ? `<div class="dyn-news-src">来源：${n.source}</div>` : ''}
+      </li>`;
+  }
+  newsHtml += '</ul>';
+
+  // 组装
+  document.getElementById('dynamicsContent').innerHTML = `
+    ${summaryHtml}
+    <div class="dyn-section">
+      <h3>商飞重点机型历年交付量及产能预测（${years[0] || 2015}–${years[years.length-1] || 2030}）</h3>
+      ${chartHtml}
+    </div>
+    <div class="dyn-section">
+      <h3>商飞重点资讯（与供应商相关）</h3>
+      ${newsHtml}
+    </div>
+  `;
+
+  // 渲染图表
+  const ctx = document.getElementById('dynChart');
+  if (ctx) {
+    if (dynChartInstance) dynChartInstance.destroy();
+    dynChartInstance = new Chart(ctx, {
+      type: 'line',
+      data: { labels: years, datasets: datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: true, position: 'bottom', labels: { font: { size: 11 }, boxWidth: 20 } },
+          tooltip: { titleFont: { size: 13 }, bodyFont: { size: 12 } }
+        },
+        scales: {
+          x: { title: { display: true, text: '年份', font: { size: 12 } }, grid: { display: false } },
+          y: { title: { display: true, text: '交付量（架）', font: { size: 12 } }, beginAtZero: true, grid: { color: '#f0f0f0' } }
+        }
+      }
+    });
+  }
+}
+
+// ================================================================
+// 项目推进思路
+// ================================================================
+function renderProjectPlan() {
+  var plan = DATA.projectPlan;
+  if (!plan) { document.getElementById('planContent').innerHTML = '<p>暂无数据</p>'; return; }
+
+  var html = '';
+
+  // 项目概览
+  html += '<div class="plan-header">';
+  html += '<h2>' + plan.title + '</h2>';
+  html += '<div class="plan-meta">';
+  html += '<span>\ud83d\udcc5 ' + plan.period + '</span>';
+  html += '<span>\ud83d\udc64 项目负责人：' + plan.projectLead + '</span>';
+  html += '<span>\ud83c\udfaf 总预算：' + plan.budget.total + '万元</span>';
+  html += '</div></div>';
+
+  // 刚性节点
+  html += '<div class="plan-rigid"><h4>\u26a0\ufe0f 刚性时间节点</h4><ul>';
+  for (var i = 0; i < plan.rigidNodes.length; i++) {
+    html += '<li>' + plan.rigidNodes[i] + '</li>';
+  }
+  html += '</ul></div>';
+
+  // 甘特图
+  html += '<div class="plan-gantt"><h3>\ud83d\udcca 项目推进甘特图</h3>';
+  html += '<div class="gantt-chart">';
+  // 月份头
+  var months = ['2026.08','2026.09','2026.10','2026.11','2026.12','2027.01','2027.02','2027.03','2027.04','2027.05','2027.06','2027.07','2027.08'];
+  html += '<div class="gantt-header"><div class="gantt-label">阶段</div><div class="gantt-months">';
+  for (var m = 0; m < 13; m++) {
+    html += '<div class="gantt-month">' + (months[m] || '') + '</div>';
+  }
+  html += '</div></div>';
+  // 阶段条
+  for (var pi = 0; pi < plan.phases.length; pi++) {
+    var ph = plan.phases[pi];
+    var startMonth = Math.min.apply(null, ph.months);
+    var endMonth = Math.max.apply(null, ph.months);
+    var leftPct = ((startMonth - 1) / 13 * 100).toFixed(1);
+    var widthPct = ((endMonth - startMonth + 1) / 13 * 100).toFixed(1);
+    html += '<div class="gantt-row">';
+    html += '<div class="gantt-label" style="color:' + ph.color + '">' + ph.id + ' ' + ph.name + '</div>';
+    html += '<div class="gantt-bar-area">';
+    html += '<div class="gantt-bar" style="left:' + leftPct + '%;width:' + widthPct + '%;background:' + ph.color + ';" title="' + ph.period + '">' + ph.period + '</div>';
+    html += '</div></div>';
+  }
+  html += '</div></div>';
+
+  // 各阶段详情
+  html += '<h3 style="font-size:16px;margin-bottom:16px;color:#333;">\ud83d\udcdd 各阶段核心里程碑</h3>';
+  html += '<div class="plan-phase-detail">';
+  for (var pi = 0; pi < plan.phases.length; pi++) {
+    var ph = plan.phases[pi];
+    html += '<div class="phase-card" style="border-top-color:' + ph.color + ';">';
+    html += '<h4 style="color:' + ph.color + ';">' + ph.id + ' ' + ph.name + '</h4>';
+    html += '<div class="phase-period">\ud83d\udcc5 ' + ph.period + '</div>';
+    html += '<div class="phase-lead">\ud83d\udc64 负责人：' + ph.lead + '</div>';
+    html += '<ul>';
+    for (var mi = 0; mi < ph.milestones.length; mi++) {
+      html += '<li>' + ph.milestones[mi] + '</li>';
+    }
+    html += '</ul>';
+    html += '<div class="phase-deliverables"><strong>\ud83d\udce6 交付物：</strong>' + ph.deliverables + '</div>';
+    html += '</div>';
+  }
+  html += '</div>';
+
+  // 预算分配
+  html += '<div class="plan-budget-section"><h3>\ud83d\udcb0 预算分配（总计 ' + plan.budget.total + ' 万元）</h3>';
+  for (var bi = 0; bi < plan.budget.items.length; bi++) {
+    var b = plan.budget.items[bi];
+    html += '<div class="budget-bar-item">';
+    html += '<div class="blabel">' + b.name + '</div>';
+    html += '<div class="bar-wrap"><div class="bar-fill" style="width:' + b.pct + '%;background:' + b.color + ';">' + b.pct + '%</div></div>';
+    html += '<div class="bamount">' + b.amount + ' 万元</div>';
+    html += '</div>';
+  }
+  html += '</div>';
+
+  // 效益预测
+  var rf = plan.revenueForecast;
+  var maxRev = Math.max.apply(null, rf.revenue);
+  var maxProfit = Math.max.apply(null, rf.profit.map(function(v){ return Math.abs(v); }));
+  var maxVal = Math.max(maxRev, maxProfit);
+  html += '<div class="plan-revenue-section"><h3>\ud83d\udcc8 效益预测（万元）</h3>';
+  html += '<div class="revenue-chart">';
+  for (var ri = 0; ri < rf.years.length; ri++) {
+    var revH = Math.max(Math.round(rf.revenue[ri] / maxVal * 170), 4);
+    var proH = Math.max(Math.round(Math.abs(rf.profit[ri]) / maxVal * 170), 4);
+    var proColor = rf.profit[ri] >= 0 ? '#70AD47' : '#C00000';
+    html += '<div class="revenue-group">';
+    html += '<div class="revenue-bars">';
+    html += '<div class="revenue-bar" style="height:' + revH + 'px;background:#5B9BD5;" title="营收: ' + rf.revenue[ri] + '万"><span class="bar-val">' + rf.revenue[ri] + '</span></div>';
+    html += '<div class="revenue-bar" style="height:' + proH + 'px;background:' + proColor + ';" title="利润: ' + rf.profit[ri] + '万"><span class="bar-val">' + rf.profit[ri] + '</span></div>';
+    html += '</div>';
+    html += '<div class="revenue-label">' + rf.years[ri] + '</div>';
+    html += '</div>';
+  }
+  html += '</div>';
+  html += '<div style="text-align:center;margin-top:12px;font-size:12px;color:#888;">';
+  html += '<span style="display:inline-block;width:12px;height:12px;background:#5B9BD5;border-radius:2px;vertical-align:middle;"></span> 营收 ';
+  html += '<span style="display:inline-block;width:12px;height:12px;background:#70AD47;border-radius:2px;vertical-align:middle;margin-left:12px;"></span> 利润(正) ';
+  html += '<span style="display:inline-block;width:12px;height:12px;background:#C00000;border-radius:2px;vertical-align:middle;margin-left:12px;"></span> 利润(负)';
+  html += '</div></div>';
+
+  document.getElementById('planContent').innerHTML = html;
+}
+
+// ================================================================
+// 团队组织架构
+// ================================================================
+function renderTeamOrg() {
+  var org = DATA.teamOrg;
+  if (!org) { document.getElementById('teamContent').innerHTML = '<p>暂无数据</p>'; return; }
+
+  var html = '';
+
+  // 标题
+  html += '<div class="org-header"><h2>' + org.title + '</h2></div>';
+
+  // 负责人
+  html += '<div class="org-leader-card">';
+  html += '<div class="org-avatar">' + org.leader.avatar + '</div>';
+  html += '<h3>' + org.leader.name + '</h3>';
+  html += '<div class="leader-role">' + org.leader.role + '</div>';
+  html += '</div>';
+
+  // 连接线 SVG
+  html += '<div class="org-connector">';
+  html += '<svg width="800" height="40" viewBox="0 0 800 40">';
+  html += '<line x1="400" y1="0" x2="400" y2="20" stroke="#C00000" stroke-width="2"/>';
+  html += '<line x1="100" y1="20" x2="700" y2="20" stroke="#C00000" stroke-width="2"/>';
+  html += '<line x1="100" y1="20" x2="100" y2="40" stroke="#C00000" stroke-width="2"/>';
+  html += '<line x1="300" y1="20" x2="300" y2="40" stroke="#C00000" stroke-width="2"/>';
+  html += '<line x1="500" y1="20" x2="500" y2="40" stroke="#C00000" stroke-width="2"/>';
+  html += '<line x1="700" y1="20" x2="700" y2="40" stroke="#C00000" stroke-width="2"/>';
+  html += '</svg></div>';
+
+  // 四个小组
+  html += '<div class="org-teams">';
+  for (var ti = 0; ti < org.teams.length; ti++) {
+    var t = org.teams[ti];
+    html += '<div class="org-team-card">';
+    html += '<div class="org-team-header" style="background:' + t.color + ';">';
+    html += '<span class="team-icon">' + t.icon + '</span>';
+    html += '<h4>' + t.name + '</h4></div>';
+    html += '<div class="org-team-body">';
+    html += '<div class="org-team-lead"><span class="lead-name">' + t.lead.name + '</span><span class="lead-role">' + t.lead.role + '</span></div>';
+    html += '<div class="org-team-count">\ud83d\udc65 ' + t.headcount + '</div>';
+    html += '<div class="org-duties">';
+    for (var di = 0; di < t.duties.length; di++) {
+      html += '<span class="org-duty-tag" style="border-color:' + t.color + '30;background:' + t.color + '10;">' + t.duties[di] + '</span>';
+    }
+    html += '</div></div></div>';
+  }
+  html += '</div>';
+
+  // 激励机制
+  html += '<div class="org-incentive"><h3>\ud83c\udfc6 激励机制</h3><ul>';
+  for (var ii = 0; ii < org.incentives.length; ii++) {
+    html += '<li>' + org.incentives[ii] + '</li>';
+  }
+  html += '</ul></div>';
+
+  document.getElementById('teamContent').innerHTML = html;
+}
+
+// ================================================================
+// Node Tooltip (comacOwner)
+// ================================================================
+function showNodeTip(e, nodeId) {
+  var n = DATA.nodes.find(function(x){ return x.id === nodeId; });
+  if (!n) return;
+  var owner = n.comacOwner || {};
+  var tip = document.getElementById('chartTooltip');
+  tip.innerHTML = '<div class="tt-title">' + n.sequence + '. ' + n.name + '</div>'
+    + '<div class="tt-status" style="margin-top:4px;">\ud83d\udccc 商飞对口部门：' + (owner.dept || '待确认') + '</div>'
+    + '<div class="tt-status">\ud83d\udc64 负责人：' + (owner.person || '待确认') + (owner.role ? '（' + owner.role + '）' : '') + '</div>'
+    + '<div class="tt-detail">' + (n.detail || '') + '</div>';
+  tip.style.display = 'block';
+  tip.style.left = (e.clientX + 16) + 'px';
+  tip.style.top = (e.clientY - 10) + 'px';
+}
+function hideNodeTip() {
+  document.getElementById('chartTooltip').style.display = 'none';
+}
+
+// ================================================================
+// Chart Tooltip
+// ================================================================
+function showChartTip(e, el) {
+  const tip = document.getElementById('chartTooltip');
+  tip.innerHTML = el.getAttribute('data-tip') || '';
+  tip.style.display = 'block';
+  tip.style.left = (e.clientX + 16) + 'px';
+  tip.style.top = (e.clientY - 10) + 'px';
+  el.style.filter = 'brightness(0.9)';
+  el.style.transform = 'scale(1.02)';
+}
+function hideChartTip() {
+  const tip = document.getElementById('chartTooltip');
+  tip.style.display = 'none';
+  document.querySelectorAll('.chart-node').forEach(n => { n.style.filter = 'none'; n.style.transform = 'none'; });
+}
+document.addEventListener('mousemove', function(e) {
+  const tip = document.getElementById('chartTooltip');
+  if (tip && tip.style.display === 'block') {
+    tip.style.left = (e.clientX + 16) + 'px';
+    tip.style.top = (e.clientY - 10) + 'px';
+  }
+});
+
+// 启动
+init();
+</script>
+
+<div class="chart-tooltip" id="chartTooltip"></div>
+</body>
+</html>
