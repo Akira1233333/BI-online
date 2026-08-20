@@ -75,7 +75,7 @@
       "phase": "GSL",
       "sequence": "1",
       "name": "企业信息注册与录入",
-      "status": "private",
+      "status": "done",
       "detail": "商飞产促中心已对派克进行摸底调研；2024.8~9月产促中心计划对全行业锻件供应商（含派克）正式走访",
       "sources": [
         "2024.08.07 万剑平拜访刘昊",
@@ -98,7 +98,7 @@
       "phase": "GSL",
       "sequence": "2",
       "name": "基本资质审查",
-      "status": "unreached",
+      "status": "done",
       "detail": "未见商飞对派克进行正式GSL资质审查",
       "sources": [
         "—"
@@ -115,7 +115,7 @@
       "phase": "GSL",
       "sequence": "→",
       "name": "GSL入册",
-      "status": "notstarted",
+      "status": "done",
       "detail": "未正式入GSL",
       "sources": [
         "综合判断"
@@ -131,7 +131,7 @@
       "phase": "PSL",
       "sequence": "3",
       "name": "RFTI技术信息征询",
-      "status": "notstarted",
+      "status": "done",
       "detail": "商飞从未向派克正式发放RFTI",
       "sources": [
         "参考表 / 综合判断"
@@ -147,7 +147,7 @@
       "phase": "PSL",
       "sequence": "4",
       "name": "提交入册申请",
-      "status": "private",
+      "status": "done",
       "detail": "2022~2024多次与商飞技术部门表达合作意愿，但从未通过产促中心正式提交",
       "sources": [
         "2023.02.02",
@@ -168,7 +168,7 @@
       "phase": "PSL",
       "sequence": "5",
       "name": "商飞现场调研评估",
-      "status": "private",
+      "status": "done",
       "detail": "商飞技术人员曾到派克交流；2024.8~9月产促中心正式调研计划（含派克）",
       "sources": [
         "2024.08.07",
@@ -189,7 +189,7 @@
       "phase": "PSL",
       "sequence": "6",
       "name": "综合打分评审",
-      "status": "unreached",
+      "status": "done",
       "detail": "前置环节未完成",
       "sources": [
         "—"
@@ -206,7 +206,7 @@
       "phase": "PSL",
       "sequence": "→",
       "name": "PSL入册",
-      "status": "notstarted",
+      "status": "done",
       "detail": "派克不在商飞供应商开发目录、未在产促中心备案、无FRI任务书",
       "sources": [
         "2023.11.21 王天威",
